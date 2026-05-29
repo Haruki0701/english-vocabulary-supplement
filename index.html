@@ -1,1 +1,513 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高3レベル 英単語サプリ+解説</title>
+    <style>
+        :root {
+            --bg-0: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --bg-1: linear-gradient(135deg, #243b55 0%, #141e30 100%);
+            --bg-2: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
+            --bg-3: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            --bg-4: linear-gradient(135deg, #414d0b 0%, #727a17 100%);
+            --bg-5: linear-gradient(135deg, #0f2027 0%, #203a43 100%);
+            --bg-6: linear-gradient(135deg, #3d7eaa 0%, #6d7f9c 100%);
+        }
 
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-0);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: background 0.5s ease;
+        }
+        .quiz-container {
+            background-color: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 100%;
+            max-width: 460px;
+        }
+        .mode-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            background-color: #e8f0fe;
+            color: #1a73e8;
+        }
+        .progress-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #34a853;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .word-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 25px 0;
+        }
+        .word {
+            font-size: 38px;
+            font-weight: bold;
+            color: #1a73e8;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+        }
+        .audio-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .options {
+            display: grid;
+            gap: 12px;
+        }
+        button.option-btn {
+            background-color: #ffffff;
+            border: 2px solid #e0e2e6;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            padding-left: 20px;
+        }
+        button.option-btn:hover:not(:disabled) {
+            background-color: #f1f7fe;
+            border-color: #1a73e8;
+            color: #1a73e8;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .correct { color: #28a745; }
+        .incorrect { color: #dc3545; }
+
+        /* ーーー 新設：解説カードのスタイル ーーー */
+        .explanation-card {
+            display: none;
+            background-color: #f8f9fa;
+            border-left: 5px solid #dc3545;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: left;
+            font-size: 14px;
+            color: #333;
+        }
+        .exp-title {
+            font-weight: bold;
+            color: #dc3545;
+            margin-bottom: 5px;
+        }
+        .goro {
+            background-color: #fff3cd;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 8px 0;
+            border-left: 3px solid #ffc107;
+        }
+        .example-box {
+            margin-top: 8px;
+            font-style: italic;
+            color: #555;
+            background: #edf2f7;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .action-btn {
+            margin-top: 25px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            display: none;
+        }
+        .action-btn:hover {
+            background-color: #1557b5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container" id="quiz-card">
+    <div id="mode-text" class="mode-badge">通常モード</div>
+    <div class="progress-box">
+        <span id="progress-text">第 1 問</span>
+        <span id="score-text">スコア: 0</span>
+    </div>
+    <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
+    </div>
+
+    <div class="word-container">
+        <div id="word" class="word" onclick="speakWord(document.getElementById('word').innerText)">---</div>
+        <button class="audio-btn" onclick="speakWord(document.getElementById('word').innerText)">🔊</button>
+    </div>
+    
+    <div id="options" class="options"></div>
+    <div id="result"></div>
+
+    <!-- 解説カード -->
+    <div id="explanation" class="explanation-card">
+        <div class="exp-title">💡 不正解解説</div>
+        <div id="exp-text">ここに一言解説が入ります。</div>
+        <div id="exp-goro" class="goro">ここに語呂合わせが入ります。</div>
+        <div class="example-box">
+            <span style="font-weight:bold; font-style:normal;">例文:</span> 
+            <span id="exp-ex-en">English example.</span> <button style="background:none; border:none; cursor:pointer;" id="speaker-ex-btn">🔊</button><br>
+            <span id="exp-ex-ja" style="font-size:13px; color:#666; font-style:normal;">(日本語訳)</span>
+        </div>
+    </div>
+    
+    <button id="next-btn" class="action-btn" onclick="nextQuestion()">次の問題へ</button>
+</div>
+
+<script>
+    // 基本単語データ（解説・語呂合わせ・例文を追加）
+    const baseVocabulary = [
+        { 
+            word: "abolish", 
+            options: ["廃止する", "設立する", "許可する", "誇張する"], 
+            answer: "廃止する",
+            hint: "法律や制度、奴隷制などを完全に無くすときに使われます。",
+            goro: "「暴利（ぼうり）し」た悪徳制度を廃止する",
+            ex_en: "The government decided to abolish the tax.",
+            ex_ja: "政府はその税金を廃止することを決定した。"
+        },
+        { 
+            word: "acquire", 
+            options: ["獲得する", "要求する", "放棄する", "調査する"], 
+            answer: "獲得する",
+            hint: "時間をかけて努力し、言語や技術、財産などを手に入れること。",
+            goro: "「あ、これ（あくわいあ）」いいな！努力で技術を獲得する",
+            ex_en: "She managed to acquire a new language.",
+            ex_ja: "彼女はどうにか新しい言語を獲得（習得）した。"
+        },
+        { 
+            word: "alternative", 
+            options: ["代わりの・選択肢", "伝統的な", "一時的な", "人工的な"], 
+            answer: "代わりの・選択肢",
+            hint: "alter（変える）が語源。今までのものに代わる新しい案のこと。",
+            goro: "「洗ったネタ、他（おるたなてぃぶ）」に代わりの選択肢はない",
+            ex_en: "Is there any alternative plan?",
+            ex_ja: "何か代わりの計画（代替案）はありますか？"
+        },
+        { 
+            word: "analyze", 
+            options: ["分析する", "麻痺させる", "合成する", "批判する"], 
+            answer: "分析する",
+            hint: "データを細かく分けて、原因や構造を調べることです。",
+            goro: "「あ、穴開（あならい）ず」にデータを細かく分析する",
+            ex_en: "We need to analyze the test results.",
+            ex_ja: "私たちはテスト結果を分析する必要がある。"
+        },
+        { 
+            word: "annual", 
+            options: ["年一回の・毎年の", "月一回の", "世紀の", "永遠の"], 
+            answer: "年一回の・毎年の",
+            hint: "ann（年）が語源。記念日の anniversary と仲間です。",
+            goro: "「あん（あん）にゅある」毎年恒例、年一回のイベント",
+            ex_en: "The company holds an annual meeting in Tokyo.",
+            ex_ja: "その会社は東京で年一回の総会を開く。"
+        },
+        { 
+            word: "cooperate", 
+            options: ["協力する", "競争する", "衝突する", "妥協する"], 
+            answer: "協力する",
+            hint: "co（共に）+ operate（作動する）＝力を合わせる。",
+            goro: "「子（こ）をオペレート」するために親が協力する",
+            ex_en: "Everyone must cooperate to finish this project.",
+            ex_ja: "このプロジェクトを終えるために全員が協力しなければならない。"
+        },
+        { 
+            word: "decline", 
+            options: ["衰退する・断る", "承認する", "傾く", "拡大する"], 
+            answer: "衰退する・断る",
+            hint: "下向きに傾くことから、数などが「減る」、誘いを「丁寧に断る」の意味に。",
+            goro: "「でかいライン（でくらいん）」が右肩下がりに衰退する",
+            ex_en: "He chose to decline the invitation.",
+            ex_ja: "彼は招待を断ることを選んだ。"
+        },
+        { 
+            word: "distinguish", 
+            options: ["区別する", "消滅させる", "尊敬する", "がっかりさせる"], 
+            answer: "区別する",
+            hint: "2つのものの違いを見分ける、はっきり分けるという意味。",
+            goro: "「ディス（です）るチンパンジーと人間を区別する」",
+            ex_en: "It is hard to distinguish the twins.",
+            ex_ja: "その双子を区別するのは難しい。"
+        },
+        { 
+            word: "emphasize", 
+            options: ["強調する", "同情する", "批判する", "無視する"], 
+            answer: "強調する",
+            hint: "そこにスポットライトを当てて、大事であることを強く主張する。",
+            goro: "「縁（えん）をファサ（ふぁさ）っと広げて重要性を強調する」",
+            ex_en: "The teacher emphasized the importance of review.",
+            ex_ja: "先生は復習の重要性を強調した。"
+        },
+        { 
+            word: "exaggerate", 
+            options: ["誇張する", "展示する", "疲れ果てさせる", "除外する"], 
+            answer: "誇張する",
+            hint: "話を盛る、大げさに言うという意味の重要単語です。",
+            goro: "「育（いぐざ）ったジャガイモを大げさに誇張する」",
+            ex_en: "Don't exaggerate. It wasn't that big.",
+            ex_ja: "誇張する（話を盛る）なよ。そんなに大きくなかったろ。"
+        }
+    ];
+
+    let quizData = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let isReviewMode = false;
+
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function getTodayString() {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    }
+
+    function addDays(dateStr, days) {
+        const date = new Date(dateStr);
+        date.setDate(date.getDate() + days);
+        return date.toISOString().split('T')[0];
+    }
+
+    function setupReviewSystem() {
+        const todayStr = getTodayString();
+        const reviewSchedule = JSON.parse(localStorage.getItem("reviewSchedule")) || {};
+        
+        let reviewWords = baseVocabulary.filter(item => {
+            return reviewSchedule[item.word] && reviewSchedule[item.word] <= todayStr;
+        });
+
+        if (reviewWords.length > 0) {
+            quizData = shuffle([...reviewWords]);
+            isReviewMode = true;
+            document.getElementById("mode-text").innerText = "⏰ 復習モード (本日分)";
+            document.getElementById("mode-text").style.backgroundColor = "#fce8e6";
+            document.getElementById("mode-text").style.color = "#c5221f";
+        } else {
+            quizData = shuffle([...baseVocabulary]);
+            isReviewMode = false;
+            document.getElementById("mode-text").innerText = "📖 通常モード";
+            document.getElementById("mode-text").style.backgroundColor = "#e8f0fe";
+            document.getElementById("mode-text").style.color = "#1a73e8";
+        }
+    }
+
+    function saveWrongAnswerReview(word) {
+        const reviewSchedule = JSON.parse(localStorage.getItem("reviewSchedule")) || {};
+        const todayStr = getTodayString();
+        
+        let currentStage = parseInt(localStorage.getItem(`stage_${word}`)) || 0;
+        let nextDays = 1;
+
+        if (currentStage === 1) nextDays = 7;
+        else if (currentStage >= 2) nextDays = 30;
+        
+        reviewSchedule[word] = addDays(todayStr, nextDays);
+        localStorage.setItem(`stage_${word}`, currentStage + 1);
+        localStorage.setItem("reviewSchedule", JSON.stringify(reviewSchedule));
+    }
+
+    function clearCorrectAnswerReview(word) {
+        const reviewSchedule = JSON.parse(localStorage.getItem("reviewSchedule")) || {};
+        if (reviewSchedule[word]) {
+            delete reviewSchedule[word];
+            localStorage.removeItem(`stage_${word}`);
+            localStorage.setItem("reviewSchedule", JSON.stringify(reviewSchedule));
+        }
+    }
+
+    function setDayBackground() {
+        const day = new Date().getDay();
+        document.body.style.background = `var(--bg-${day})`;
+    }
+
+    // 音声合成（単語・例文兼用）
+    function speakWord(text) {
+        if ('speechSynthesis' in window && text !== "---") {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.85;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function initGame() {
+        setDayBackground();
+        setupReviewSystem();
+        currentQuestionIndex = 0;
+        score = 0;
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const currentQuestion = quizData[currentQuestionIndex];
+        
+        document.getElementById("progress-text").innerText = `第 ${currentQuestionIndex + 1} 問 / 全 ${quizData.length} 問`;
+        document.getElementById("score-text").innerText = `スコア: ${score}`;
+        const progressPercent = ((currentQuestionIndex) / quizData.length) * 100;
+        document.getElementById("progress-fill").style.width = `${progressPercent}%`;
+
+        document.getElementById("word").innerText = currentQuestion.word;
+        
+        // 解説カードを隠す
+        document.getElementById("explanation").style.display = "none";
+
+        setTimeout(() => speakWord(currentQuestion.word), 100);
+
+        const optionsContainer = document.getElementById("options");
+        optionsContainer.innerHTML = "";
+        document.getElementById("result").innerText = "";
+        document.getElementById("next-btn").style.display = "none";
+
+        const shuffledOptions = shuffle([...currentQuestion.options]);
+
+        shuffledOptions.forEach((option, index) => {
+            const button = document.createElement("button");
+            button.className = "option-btn";
+            button.innerText = `${index + 1}. ${option}`;
+            button.onclick = () => checkAnswer(option, button);
+            optionsContainer.appendChild(button);
+        });
+    }
+
+    function checkAnswer(selected, selectedButton) {
+        const currentQuestion = quizData[currentQuestionIndex];
+        const correctAnswer = currentQuestion.answer;
+        const resultDiv = document.getElementById("result");
+        
+        const buttons = document.querySelectorAll(".options button");
+        buttons.forEach(btn => btn.disabled = true);
+
+        if (selected === correctAnswer) {
+            resultDiv.innerText = "⭕ 正解！";
+            resultDiv.className = "correct";
+            selectedButton.style.backgroundColor = "#e6f4ea";
+            selectedButton.style.borderColor = "#34a853";
+            selectedButton.style.color = "#137333";
+            score++;
+            document.getElementById("score-text").innerText = `スコア: ${score}`;
+            
+            if (isReviewMode) {
+                clearCorrectAnswerReview(currentQuestion.word);
+            }
+        } else {
+            resultDiv.innerText = `❌ 不正解... (正解: ${correctAnswer})`;
+            resultDiv.className = "incorrect";
+            selectedButton.style.backgroundColor = "#fce8e6";
+            selectedButton.style.borderColor = "#ea4335";
+            selectedButton.style.color = "#c5221f";
+            
+            buttons.forEach(btn => {
+                if (btn.innerText.includes(correctAnswer)) {
+                    btn.style.backgroundColor = "#e6f4ea";
+                    btn.style.borderColor = "#34a853";
+                }
+            });
+
+            // ーーー 間違えたので解説を表示 ーーー
+            document.getElementById("exp-text").innerText = currentQuestion.hint;
+            document.getElementById("exp-goro").innerText = `💡 語呂合わせ: ${currentQuestion.goro}`;
+            document.getElementById("exp-ex-en").innerText = currentQuestion.ex_en;
+            document.getElementById("exp-ex-ja").innerText = currentQuestion.ex_ja;
+            
+            // 例文の音声ボタンを設定
+            document.getElementById("speaker-ex-btn").onclick = () => speakWord(currentQuestion.ex_en);
+            
+            document.getElementById("explanation").style.display = "block";
+
+            saveWrongAnswerReview(currentQuestion.word);
+        }
+
+        const nextBtn = document.getElementById("next-btn");
+        if (currentQuestionIndex === quizData.length - 1) {
+            nextBtn.innerText = "結果を見る";
+        } else {
+            nextBtn.innerText = "次の問題へ";
+        }
+        nextBtn.style.display = "block";
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < quizData.length) {
+            loadQuestion();
+        } else {
+            document.getElementById("progress-fill").style.width = "100%";
+            
+            let finishTitle = isReviewMode ? "🎉 今日の復習完了！" : "🎉 通常クイズ終了！";
+            let comment = "素晴らしい集中力です！";
+            if (score / quizData.length < 0.6) {
+                comment = "間違えた単語は明日また自動で出題されます。語呂合わせで今覚えちゃいましょう！";
+            }
+
+            document.getElementById("quiz-card").innerHTML = `
+                <h1 style="font-size: 26px; margin-bottom: 10px;">${finishTitle}</h1>
+                <p style="font-size: 18px; color: #333; margin-top: 20px;">
+                    成果: <strong>${quizData.length} 問中 ${score} 問正解</strong>
+                </p>
+                <p style="font-size: 14px; color: #666; margin-bottom: 30px;">${comment}</p>
+                <button class="action-btn" style="display:block;" onclick="location.reload()">もう一度トップに戻る</button>
+            `;
+        }
+    }
+
+    initGame();
+</script>
+
+</body></html>
+  
+  
